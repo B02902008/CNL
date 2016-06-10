@@ -1,0 +1,70 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+	<!-- Meta Properties -->
+	<meta charset="UTF-8">
+	<title>BombKing.io</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+	<!-- CSS -->
+	<link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+	<div id="gameAreaWrapper">
+		<div id="ranking"><span class="title">Score Ranking</span></div>
+		<div id="playerstatus">
+			<span id="level_status" style="float:left">Level : 0</span>
+			<span id="score_status" style="float:right;">Score : -1</span><br>
+			<span id="point_status" style="float:left">Skill Points left : -1</span><br>
+			<span id="bomb_status" style="float:left">Bombs left : 0</span>
+			<button type="button" class="btn btn-default btn-xs" style="margin: 0px 0px 0px 0px; display:inline-block; float:right;" id="bomb_plus">+</button><br>
+			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; width: 130px; float:left;">
+				<div id="speed_status" class="progress-bar progress-bar-info" role="progressbar" style="width:0%">speed</div>
+			</div>
+			<button type="button" class="btn btn-info btn-xs" style="margin: 4px 0px 0px 0px; display:inline-block; float:right;" id="speed_plus">+</button><br>
+			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; width: 130px; float:left;">
+				<div id="power_status" class="progress-bar progress-bar-danger" role="progressbar" style="width:0%">power</div>
+			</div>
+			<button type="button" class="btn btn-danger btn-xs" style="margin: 4px 0px 0px 0px; display:inline-block; float:right;" id="power_plus">+</button><br>
+			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; float:left; width: 160px;">
+				<div id="exp_status" class="progress-bar progress-bar-success" role="progressbar" style="width:0%">0 / 0</div>
+			</div>
+			<img id="shield" src="img/shield_no.png" height="50" width="50" style="margin: 5px 10px 0px 0px">
+			<img id="dart" src="img/dart_no.png" height="50" width="50" style="margin: 5px 0px 0px 10px">
+		</div>
+		<div id="mobile">
+			<input type="image" id="bomb" class="bomb" src="img/bomb.png" alt="bombBtn">
+			<input type="image" id="break" class="break" src="img/break.png" alt="breakBtn">
+		</div>
+		<canvas tabindex="1" id="cvs" style="cursor: url('http://i.imgur.com/5Td3PQP.png') 16 16, crosshair;"></canvas>
+	</div>
+	<div id="startMenuWrapper">
+		<div id="startMenu">
+			<p>Join Game</p>
+			<input type="text" tabindex="0" autofocus placeholder="Enter your name here" id="playerNameInput" maxlength="25" />
+			<b class="input-error">Nick must be alphanumeric characters only!</b>
+			<br />
+			<button id="startButton">Play</button>
+			<button id="resumeButton">Resume</button>
+			<br />
+			<div id="instructions">
+				<h3>Gameplay</h3>
+				<ul>
+					<li>Use WASD key to move your character.</li>
+					<li>Use Q key to set bomb (bomb's explosion will destory everything in its range).</li>
+					<li>Pieces / players destoryed by your bomb would be added to your score.</li>
+					<li>Objective: Try to get more score and beat other players.</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<img id="item_0" style="display:none;" src="img/item_0.png">
+	<img id="item_1" style="display:none;" src="img/item_1.png">
+	<img id="item_bomb" style="display:none;" src="img/item_bomb.png">
+	<img id="explosion" style="display:none;" src="img/explosion.png">
+	<!-- JS -->
+	<script src="//code.jquery.com/jquery-2.2.0.min.js"></script>
+	<script src="js/app.js"></script>
+	<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+</body>
+</html>
