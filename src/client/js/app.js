@@ -26,9 +26,10 @@ if ( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent) ) {
 	global.mobile = true;
 }
 
-function startGame(type) {
+function startGame(type, key) {
 	//set global variables
 	global.playerName = playerNameInput.value.replace(/(<([^>]+)>)/ig, '').substring(0,25);
+	playerNameInput.value = '';
 	global.playerType = type;
 	global.screenWidth = window.innerWidth;
 	global.screenHeight = window.innerHeight;
@@ -42,42 +43,40 @@ function startGame(type) {
 	}
 	if (!global.animLoopHandle)
 		animloop();
-	socket.emit('respawn');
+	socket.emit('respawn', key);
 	window.canvas.socket = socket;
 	global.socket = socket;
 }
 
-// Checks if the nick chosen contains valid alphanumeric characters (and underscores).
-function validNick() {
-	var regex = /^\w*$/;
-	return regex.exec(playerNameInput.value) !== null;
-}
-
 window.onload = function() {
-	var btn = document.getElementById('startButton'),
+	var startBtn = document.getElementById('startButton'),
+		resumeBtn  = document.getElementById('resumeButton'),
 		nickErrorText = document.querySelector('#startMenu .input-error');
+	var expire = new Date(); 
+	expire.setTime(expire.getTime() - 1);
 	//start button clicked
-	btn.onclick = function () {
-		if (validNick()) {
-			nickErrorText.style.opacity = 0;
-			startGame('player');
-		} else {
-			nickErrorText.style.opacity = 1;
-		}
+	startBtn.onclick = function () {
+		document.cookie = "DB_KEY=0;expires=" + expire.toGMTString();
+		startGame('player', '');
 	};
 	//enter key clicked
 	playerNameInput.addEventListener('keypress', function (e) {
 		var key = e.which || e.keyCode;
 		if (key === global.KEY_ENTER) {
-			if (validNick()) {
-				nickErrorText.style.opacity = 0;
-				startGame('player');
-			} else {
-				nickErrorText.style.opacity = 1;
-			}
+			document.cookie = "DB_KEY=0;expires=" + expire.toGMTString();
+			startGame('player', '');
 		}
 	});
 	//resume button clicked
+	resumeBtn.onclick = function () {
+		var db_key = document.cookie.match(new RegExp("(^| )DB_KEY=([^;]*)(;|$)")); 
+		if(db_key !== null) {
+			document.cookie = "DB_KEY=0;expires=" + expire.toGMTString();
+			startGame('player', db_key[2]);
+		} else {
+			startGame('player', '');
+		}
+	};
 };
 
 var items = [];
@@ -99,7 +98,10 @@ $( "#bomb" ).click(function() {
 	c.focus();
 });
 $( "#break" ).click(function() {
-	socket.emit('3');
+	var expire = new Date(), db_key = new Date().getTime() + '_' + global.player.id;
+	expire.setTime(expire.getTime() + (1 * 86400000));
+	document.cookie = "DB_KEY=" + db_key + ";expires=" + expire.toGMTString();
+	socket.emit('3', db_key);
 	c.focus();
 });
 $( "#bomb_plus" ).click(function() {
@@ -126,10 +128,13 @@ function setupSocket(socket) {
 		global.disconnected = true;
 	});
 	//Handle connection.
-	socket.on('welcome', function (playerSettings) {
-//todo: get data from db
+	socket.on('welcome', function (playerSettings, nameChange) {
 		player = playerSettings;
-		player.name = global.playerName;
+		if (nameChange) {
+			player.name = global.playerName;
+		} else {
+			global.playerName = player.name;
+		}
 		player.screenWidth = global.screenWidth;
 		player.screenHeight = global.screenHeight;
 		player.target = window.canvas.target;
@@ -194,8 +199,9 @@ function setupSocket(socket) {
 		bombs = bombsList;
 	});
 	// Death.
-	socket.on('RIP', function () {
+	socket.on('RIP', function (data) {
 		global.gameStart = false;
+		reason = data;
 		global.died = true;
 		window.setTimeout(function() {
 			document.getElementById('gameAreaWrapper').style.opacity = 0;
@@ -403,7 +409,7 @@ function gameLoop() {
 		graph.textAlign = 'center';
 		graph.fillStyle = '#FFFFFF';
 		graph.font = 'bold 30px sans-serif';
-		graph.fillText('You died!', global.screenWidth / 2, constant.screenHeight / 2);
+		graph.fillText(reason, global.screenWidth / 2, global.screenHeight / 2);
 	} else if (!global.disconnected) {
 		//in game
 		if (global.gameStart) {
@@ -427,7 +433,7 @@ function gameLoop() {
 			graph.textAlign = 'center';
 			graph.fillStyle = '#FFFFFF';
 			graph.font = 'bold 30px sans-serif';
-			graph.fillText('Game Over!', global.screenWidth / 2, global.screenHeight / 2);
+			graph.fillText('Game Loading‧‧‧', global.screenWidth / 2, global.screenHeight / 2);
 		}
 	} else {
 		//disconnected

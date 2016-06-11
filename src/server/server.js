@@ -12,6 +12,7 @@ var c = require('../../config.json');
 
 // Import utilities.
 var util = require('./lib/util');
+var dbconn = require('./lib/dbconn');
 
 // Import quadtree.
 var quadtree = require('simple-quadtree');
@@ -85,7 +86,7 @@ function movePlayer(player) {
 		player.x += deltaX;
 	}
 	//handle the case around border
-	var borderCalc = player.radius / 3;
+	var borderCalc = player.radius;
 	if (player.x > c.gameWidth - borderCalc) {
 		player.x = c.gameWidth - borderCalc;
 	}
@@ -215,12 +216,16 @@ io.on('connection', function (socket) {
 		currentPlayer.skillpoint = 0;
 	}
 	//socket on event
-	socket.on('respawn', function () {
+	socket.on('respawn', function (key) {
 		if (util.findIndex(users, currentPlayer.id) > -1)
 			users.splice(util.findIndex(users, currentPlayer.id), 1);
 		playerInit();
-		socket.emit('welcome', currentPlayer);
-		console.log('[INFO] User ' + currentPlayer.name + ' respawned!');
+		if (key.length === 0) {
+			socket.emit('welcome', currentPlayer, true);
+		} else {
+			dbconn.getQuery(key, currentPlayer, socket);
+		}
+		console.log('[INFO] User ' + currentPlayer.id + ' respawned!');
 	});
 	socket.on('gotit', function (player) {
 		console.log('[INFO] Player ' + player.name + ' connecting!');
@@ -273,7 +278,6 @@ io.on('connection', function (socket) {
 				explodedCount: 0
 			});
 			currentPlayer.bombNum -= 1;
-			console.log('[INFO] User ' + currentPlayer.name + ' set a bomb!');
 		}
 	});
 	socket.on('2', function(data) {
@@ -291,8 +295,15 @@ io.on('connection', function (socket) {
 			currentPlayer.item[1] = false;
 		}
 	});
-	socket.on('3', function() {
-		//go away
+	socket.on('3', function(key) {
+		//add back bomb not explode
+		for (var i = 0; i < bomb.length; i++) {
+			if (bomb[i].owner === currentPlayer.id && !bomb[i].exploded)
+				currentPlayer.bombNum += 1;
+		}
+		dbconn.getInsert(key, currentPlayer);
+		users.splice(util.findIndex(users, currentPlayer.id), 1);
+		socket.emit('RIP', 'Hope You to Come Back Soon!');
 	});
 	socket.on('4', function(data) {
 		//skil up
@@ -402,7 +413,7 @@ function EXPLOSION(currentBomb) {
 					user_range[n]--;
 				}
 			}
-			sockets[socketid].emit('RIP');
+			sockets[socketid].emit('RIP', 'You are exploded!');
 		}
 	}
 	//score for owner
