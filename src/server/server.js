@@ -14,11 +14,6 @@ var c = require('../../config.json');
 var util = require('./lib/util');
 var dbconn = require('./lib/dbconn');
 
-// Import quadtree.
-var quadtree = require('simple-quadtree');
-
-var tree = quadtree(0, 0, c.gameWidth, c.gameHeight);
-
 var users = [];
 var item = [];
 var piece = [];
@@ -210,7 +205,8 @@ io.on('connection', function (socket) {
 		item: [false, false],
 		score: 0,
 		level: 1,
-		skillpoint: 0
+		skillpoint: 0,
+		avatar: 1
 	};
 	function playerInit() {
 		position = c.newPlayerInitialPosition == 'farthest' ? util.uniformPosition(users, radius) : util.randomPosition(radius);
@@ -224,6 +220,7 @@ io.on('connection', function (socket) {
 		currentPlayer.score = 0;
 		currentPlayer.level = 1;
 		currentPlayer.skillpoint = 0;
+		currentPlayer.avatar = 1;
 	}
 	//socket on event
 	socket.on('respawn', function (key) {
@@ -315,10 +312,10 @@ io.on('connection', function (socket) {
 		users.splice(util.findIndex(users, currentPlayer.id), 1);
 		socket.emit('RIP', 'Hope You to Come Back Soon!');
 	});
-	socket.on('4', function(data) {
+	socket.on('4', function(op, data) {
 		//skil up
 		if ( currentPlayer.skillpoint > 0 ) {
-			switch (data) {
+			switch (op) {
 				case 'bomb':
 					currentPlayer.bombNum += 1;
 					currentPlayer.skillpoint -= 1;
@@ -333,6 +330,20 @@ io.on('connection', function (socket) {
 					if (currentPlayer.power < c.playerstatus.powerMax) {
 						currentPlayer.power += 40;
 						currentPlayer.skillpoint -= 1;
+					}
+					break;
+				case 'avatar':
+					var avatarMax = (currentPlayer.level > 14) ? 7 : Math.ceil(currentPlayer.level / 2);
+					if (data) {
+						if (currentPlayer.avatar === avatarMax)
+							currentPlayer.avatar = 1;
+						else
+							currentPlayer.avatar += 1;
+					} else {
+						if (currentPlayer.avatar === 1)
+							currentPlayer.avatar = avatarMax;
+						else
+							currentPlayer.avatar -= 1;
 					}
 					break;
 				default:
@@ -574,7 +585,9 @@ function sendUpdates() {
 							name: f.name,
 							x: f.x,
 							y: f.y,
-							radius: f.radius
+							radius: f.radius,
+							level: f.level,
+							avatar: f.avatar
 						};
 					} else {
 						return {
@@ -587,7 +600,8 @@ function sendUpdates() {
 							item: f.item,
 							score: f.score,
 							level: f.level,
-							skillpoint: f.skillpoint
+							skillpoint: f.skillpoint,
+							avatar: f.avatar
 						};
 					}
 				}

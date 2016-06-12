@@ -104,16 +104,24 @@ $( "#break" ).click(function() {
 	socket.emit('3', db_key);
 	c.focus();
 });
+$( "#avatar_fore" ).click(function() {
+	socket.emit('4', "avatar", true);
+	c.focus();
+});
+$( "#avatar_back" ).click(function() {
+	socket.emit('4', "avatar", false);
+	c.focus();
+});
 $( "#bomb_plus" ).click(function() {
-	socket.emit('4', "bomb");
+	socket.emit('4', "bomb", false);
 	c.focus();
 });
 $( "#speed_plus" ).click(function() {
-	socket.emit('4', "speed");
+	socket.emit('4', "speed", false);
 	c.focus();
 });
 $( "#power_plus" ).click(function() {
-	socket.emit('4', "power");
+	socket.emit('4', "power", false);
 	c.focus();
 });
 
@@ -308,10 +316,8 @@ function drawBomb(bomb) {
 function drawUser(user) {
 	var x = user.x - player.x + global.screenWidth / 2;
 	var y = user.y - player.y + global.screenHeight / 2;
-	graph.strokeStyle = '#00ff00';
-	graph.fillStyle = '#55ff55';
-	graph.lineWidth = playerConfig.border;
-	drawCircle(x, y, user.radius, 30);
+	var img = document.getElementById("player_" + user.avatar);
+	graph.drawImage(img, x - 35, y - 40);
 	//draw username
 	var nameCell = "";
 	if(typeof(user.id) == "undefined")
