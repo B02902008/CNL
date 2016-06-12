@@ -20,7 +20,6 @@ module.exports = {
 	disconnected: false,
 	died: false,
 	kicked: false,
-	startPingTime: 0,
 	backgroundColor: '#f2fbff',
 	lineColor: '#000000',
 	pieceColor: ["#ee0000", "#f0c000", "#5555ff"]

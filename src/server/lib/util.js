@@ -3,10 +3,10 @@
 var cfg = require('../../../config.json');
 
 //return piece sides by weighted random
-exports.pieceSide = function() {
+exports.pieceScore = function() {
 	var rand = Math.floor(Math.random() * 10);
-	var side = [3, 3, 3, 3, 3, 3, 4, 4, 4, 5];
-	return side[rand];
+	var score = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3];
+	return score[rand];
 };
 
 exports.randomInRange = function (from, to) {

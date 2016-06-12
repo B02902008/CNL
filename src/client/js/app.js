@@ -261,10 +261,19 @@ function drawItem(item) {
 function drawPiece(piece) {
 	var x = piece.x - player.x + global.screenWidth / 2;
 	var y = piece.y - player.y + global.screenHeight / 2;
-	graph.strokeStyle = global.pieceColor[piece.sides - 3];
-	graph.fillStyle = global.pieceColor[piece.sides - 3];
-	graph.lineWidth = 0;
-	drawCircle(x, y, piece.radius, piece.sides);
+	var img;
+	if (piece.targetDir.x === 0){
+		if (piece.targetDir.y >= 0)
+			img = document.getElementById("piece_" + piece.score + "_down");
+		else
+			img = document.getElementById("piece_" + piece.score + "_up");
+	} else {
+		if (piece.targetDir.x > 0)
+			img = document.getElementById("piece_" + piece.score + "_right");
+		else
+			img = document.getElementById("piece_" + piece.score + "_left");
+	}
+	graph.drawImage(img, x - 30, y - 30);
 }
 
 function drawDart(dart) {

@@ -53,16 +53,17 @@ function addItem(toAdd) {
 function addPiece(toAdd) {
 	var radius = 30;
 	while (toAdd--) {
-		var position = c.pieceUniformDisposition ? util.uniformPosition(piece, radius) : util.randomPosition(radius);
-		var sides = util.pieceSide();
+		var position = util.randomPosition(radius);
+		var score = util.pieceScore();
 		piece.push({
 			id: ((new Date()).getTime() + '' + piece.length) >>> 0,
 			x: position.x,
 			y: position.y,
 			radius: radius,
-			sides: sides,
-			score: sides - 2,
-			speed: c.piecespeed[sides - 3]
+			targetDir: {x:0, y:0},
+			dirChange: 0,
+			score: score,
+			speed: c.piecespeed[score - 1]
 		});
 	}
 }
@@ -102,13 +103,18 @@ function movePlayer(player) {
 }
 
 function movePiece(p) {
-	//random direction
-	var dirX = Math.floor(Math.random() * 10) - 5;
-	var dirY = Math.floor(Math.random() * 10) - 5;
+	//check if need to change direction
+	if (p.dirChange === 0) {
+		p.targetDir.x = Math.floor(Math.random() * 3) - 1;
+		p.targetDir.y = Math.floor(Math.random() * 3) - 1;
+		p.dirChange = 50;
+	} else {
+		p.dirChange -= 1;
+	}
 	//handle the direction
-	var deg = Math.atan2(dirY, dirX);
-	var deltaY = p.speed * Math.sin(deg);
-	var deltaX = p.speed * Math.cos(deg);
+	var deg = Math.atan2(p.targetDir.y, p.targetDir.x);
+	var deltaY = p.speed * Math.sin(deg) * Math.abs(p.targetDir.y);
+	var deltaX = p.speed * Math.cos(deg) * Math.abs(p.targetDir.x);
 	//moving
 	if (!isNaN(deltaY)) {
 		p.y += deltaY;
@@ -117,18 +123,22 @@ function movePiece(p) {
 		p.x += deltaX;
 	}
 	//handle the case around border
-	var borderCalc = p.radius + 5;
+	var borderCalc = p.radius + 30;
 	if (p.x > c.gameWidth - borderCalc) {
 		p.x = c.gameWidth - borderCalc;
+		p.targetDir.x *= -1;
 	}
 	if (p.y > c.gameHeight - borderCalc) {
 		p.y = c.gameHeight - borderCalc;
+		p.targetDir.y *= -1;
 	}
 	if (p.x < borderCalc) {
 		p.x = borderCalc;
+		p.targetDir.x *= -1;
 	}
 	if (p.y < borderCalc) {
 		p.y = borderCalc;
+		p.targetDir.y *= -1;
 	}
 }
 
