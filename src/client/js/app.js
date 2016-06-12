@@ -105,23 +105,23 @@ $( "#break" ).click(function() {
 	c.focus();
 });
 $( "#avatar_fore" ).click(function() {
-	socket.emit('4', "avatar", true);
+	socket.emit('5', true);
 	c.focus();
 });
 $( "#avatar_back" ).click(function() {
-	socket.emit('4', "avatar", false);
+	socket.emit('5', false);
 	c.focus();
 });
 $( "#bomb_plus" ).click(function() {
-	socket.emit('4', "bomb", false);
+	socket.emit('4', "bomb");
 	c.focus();
 });
 $( "#speed_plus" ).click(function() {
-	socket.emit('4', "speed", false);
+	socket.emit('4', "speed");
 	c.focus();
 });
 $( "#power_plus" ).click(function() {
-	socket.emit('4', "power", false);
+	socket.emit('4', "power");
 	c.focus();
 });
 

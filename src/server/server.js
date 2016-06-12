@@ -332,23 +332,24 @@ io.on('connection', function (socket) {
 						currentPlayer.skillpoint -= 1;
 					}
 					break;
-				case 'avatar':
-					var avatarMax = (currentPlayer.level > 14) ? 7 : Math.ceil(currentPlayer.level / 2);
-					if (data) {
-						if (currentPlayer.avatar === avatarMax)
-							currentPlayer.avatar = 1;
-						else
-							currentPlayer.avatar += 1;
-					} else {
-						if (currentPlayer.avatar === 1)
-							currentPlayer.avatar = avatarMax;
-						else
-							currentPlayer.avatar -= 1;
-					}
-					break;
 				default:
 					break;
 			}
+		}
+	});
+	socket.on('5', function(op) {
+		//change user avatar
+		var avatarMax = (currentPlayer.level > 14) ? 7 : Math.ceil(currentPlayer.level / 2);
+		if (op) {
+			if (currentPlayer.avatar === avatarMax)
+				currentPlayer.avatar = 1;
+			else
+				currentPlayer.avatar += 1;
+		} else {
+			if (currentPlayer.avatar === 1)
+				currentPlayer.avatar = avatarMax;
+			else
+				currentPlayer.avatar -= 1;
 		}
 	});
 });
