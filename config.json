@@ -10,7 +10,7 @@
 	"gameWidth": 5000,
 	"gameHeight": 5000,
 	"networkUpdateFactor": 40,
-	"maxInterval": 5000,
+	"maxInterval": 60000,
 	"itemUniformDisposition": true,
 	"newPlayerInitialPosition": "farthest"
 }

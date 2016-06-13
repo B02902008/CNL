@@ -50,8 +50,8 @@ function getQuery(key, player, socket) {
 			player.speed = parseInt(obj[0].speed);
 			player.power = parseInt(obj[0].power);
 			player.bombNum = parseInt(obj[0].bombNum);
-			player.item[0] = (parseInt(obj[0].item) % 2 !== 0);
-			player.item[1] = (parseInt(obj[0].item) >= 2);
+			player.shield = (parseInt(obj[0].shield) > 0);
+			player.dart = parseInt(obj[0].dart);
 			player.score = parseInt(obj[0].score);
 			player.level = parseInt(obj[0].level);
 			player.skillpoint = parseInt(obj[0].skillpoint);
@@ -78,7 +78,8 @@ function getInsert(key, player) {
 		speed: player.speed,
 		power: player.power,
 		bombNum: player.bombNum,
-		item: (player.item[0] ? 1 : 0) + (player.item[1] ? 2 : 0),
+		shield: (player.shield ? 1 : 0),
+		dart: player.dart,
 		score: player.score,
 		level: player.level,
 		skillpoint: player.skillpoint,

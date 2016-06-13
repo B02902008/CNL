@@ -1,13 +1,11 @@
 module.exports = {
 	// Keys and other mathematical constants
-	KEY_BREAK: 32,
+	KEY_BREAK: 112,
 	KEY_ENTER: 13,
-	KEY_DART: 101,
-	KEY_BOMB: 113,
-	KEY_LEFT: 65,
-	KEY_UP: 87,
-	KEY_RIGHT: 68,
-	KEY_DOWN: 83,
+	KEY_LEFT: 37,
+	KEY_UP: 38,
+	KEY_RIGHT: 39,
+	KEY_DOWN: 40,
 	mobile: false,
 	// Canvas
 	screenWidth: window.innerWidth,

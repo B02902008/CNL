@@ -197,8 +197,9 @@ function setupSocket(socket) {
 		document.getElementById('power_status').style.width = playerData.power + "%";
 		document.getElementById('exp_status').style.width = Math.floor(100 * playerData.score / Math.pow(2, playerData.level)) + "%";
 		document.getElementById('exp_status').innerHTML = playerData.score + "/" + Math.pow(2, playerData.level);
-		document.getElementById('shield').src = playerData.item[0] ? "img/shield.png" : "img/shield_no.png";
-		document.getElementById('dart').src = playerData.item[1] ? "img/dart.png" : "img/dart_no.png";
+		document.getElementById('shield').src = playerData.shield ? "img/shield.png" : "img/shield_no.png";
+		document.getElementById('dart').src = (playerData.dart > 0) ? "img/dart.png" : "img/dart_no.png";
+		document.getElementById('dart_status').innerHTML = "x" + playerData.dart;
 		//put to list
 		users = userData;
 		items = itemsList;

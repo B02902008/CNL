@@ -13,6 +13,8 @@ class Canvas {
 		this.cv.height = global.screenHeight;
 		//input event
 		this.cv.addEventListener('mousemove', this.mouseTarget, false);
+		this.cv.addEventListener('mouseup', this.mouseUp, false);
+		this.cv.addEventListener('mousedown', this.mouseDown, false);
 		this.cv.addEventListener('keypress', this.keyInput, false);
 		this.cv.addEventListener('keyup', this.directionUp, false);
 		this.cv.addEventListener('keydown', this.directionDown, false);
@@ -52,15 +54,39 @@ class Canvas {
 		global.dartTarget = this.parent.dartTarget;
 	}
 	
+	mouseUp(mouse) {
+		mouse = mouse || window.event;
+		switch (mouse.which) {
+			case 1:
+				this.parent.reenviar = true;
+				break;
+			case 3:
+				this.parent.reenviar = true;
+				break;
+		}
+	}
+	
+	mouseDown(mouse) {
+		mouse = mouse || window.event;
+		switch (mouse.which) {
+			case 1:
+				if (this.parent.reenviar) {
+					this.parent.socket.emit('1');
+					this.parent.reenviar = false;
+				}
+				break;
+			case 3:
+				if (this.parent.reenviar) {
+					this.parent.socket.emit('2', this.parent.dartTarget);
+					this.parent.reenviar = false;
+				}
+				break;
+		}
+	}
+	
 	keyInput(event) {
 		var key = event.which || event.keyCode;
-		if (key == global.KEY_BOMB && this.parent.reenviar) {
-			this.parent.socket.emit('1');
-			this.parent.reenviar = false;
-		} else if (key == global.KEY_DART && this.parent.reenviar) {
-			this.parent.socket.emit('2', this.parent.dartTarget);
-			this.parent.reenviar = false;
-		} else if (key == global.KEY_BREAK && this.parent.reenviar) {
+		if (key == global.KEY_BREAK && this.parent.reenviar) {
 			var expire = new Date(), db_key = new Date().getTime() + '_' + global.player.id;
 			expire.setTime(expire.getTime() + (1 * 86400000));
 			document.cookie = "DB_KEY=" + db_key + ";expires=" + expire.toGMTString();

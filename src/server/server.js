@@ -216,7 +216,8 @@ io.on('connection', function (socket) {
 		speed: 5,
 		power: 200,
 		bombNum: 1,
-		item: [false, false],
+		shield: false,
+		dart: 0,
 		score: 0,
 		level: 1,
 		skillpoint: 0,
@@ -232,8 +233,8 @@ io.on('connection', function (socket) {
 		currentPlayer.speed = 5;
 		currentPlayer.power = 200;
 		currentPlayer.bombNum = 1;
-		currentPlayer.item[0] = false;
-		currentPlayer.item[1] = false;
+		currentPlayer.shield = true;
+		currentPlayer.dart = 0;
 		currentPlayer.score = 0;
 		currentPlayer.level = 1;
 		currentPlayer.skillpoint = 0;
@@ -309,7 +310,7 @@ io.on('connection', function (socket) {
 	});
 	socket.on('2', function(data) {
 		//shoot dart
-		if (currentPlayer.item[1]) {
+		if (currentPlayer.dart > 0) {
 			dart.push({
 				x: currentPlayer.x,
 				y: currentPlayer.y,
@@ -319,7 +320,7 @@ io.on('connection', function (socket) {
 				},
 				speed: 100
 			});
-			currentPlayer.item[1] = false;
+			currentPlayer.dart -= 1;
 		}
 	});
 	socket.on('3', function(key) {
@@ -393,12 +394,20 @@ function tickPlayer(currentPlayer) {
 	//handle eating item
 	var itemEaten = item.map(eatItem).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
 	for(var m = 0; m < itemEaten.length; m++) {
-		if (item[itemEaten[m]].type < 2)
-			currentPlayer.item[item[itemEaten[m]].type] = true;
-		else if (item[itemEaten[m]].type === 2)
-			currentPlayer.opposite = 300;
-		else if (item[itemEaten[m]].type === 3)
-			currentPlayer.slowdown = 300;
+		switch (item[itemEaten[m]].type) {
+			case 0:
+				currentPlayer.shield = true;
+				break;
+			case 1:
+				currentPlayer.dart += 1;
+				break;
+			case 2:
+				currentPlayer.opposite = 300;
+				break;
+			case 3:
+				currentPlayer.slowdown = 300;
+				break;
+		}
 		item.splice(itemEaten[m],1);
 		for(var n = 0; n < itemEaten.length; n++) {
 			if(itemEaten[m] < itemEaten[n]) {
@@ -441,9 +450,9 @@ function EXPLOSION(currentBomb) {
 	//clean user in range
 	var user_range = users.map(inRange).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
 	for(m = 0; m < user_range.length; m++) {
-		if (users[user_range[m]].item[0]) {
+		if (users[user_range[m]].shield) {
 			//user in range has shield
-			users[user_range[m]].item[0] = false;
+			users[user_range[m]].shield = false;
 			users[user_range[m]].protection = 300;
 		} else if (users[user_range[m]].protection === 0) {
 			//user in range died
@@ -626,7 +635,8 @@ function sendUpdates() {
 							speed: (f.speed / c.playerstatus.speedMax) * 100,
 							power: (f.power / c.playerstatus.powerMax) * 100,
 							bombNum: f.bombNum,
-							item: f.item,
+							shield: f.shield,
+							dart: f.dart,
 							score: f.score,
 							level: f.level,
 							skillpoint: f.skillpoint,
