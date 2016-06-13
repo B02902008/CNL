@@ -389,6 +389,11 @@ function tickPlayer(currentPlayer) {
 			return true;
 		return false;
 	}
+	function eatPiece(m) {
+		if(SAT.pointInCircle(new V(m.x, m.y), playerCircle))
+			return true;
+		return false;
+	}
 	//start
 	var playerCircle = new C(new V(currentPlayer.x, currentPlayer.y), currentPlayer.radius);
 	//handle eating item
@@ -412,6 +417,26 @@ function tickPlayer(currentPlayer) {
 		for(var n = 0; n < itemEaten.length; n++) {
 			if(itemEaten[m] < itemEaten[n]) {
 				itemEaten[n]--;
+			}
+		}
+	}
+
+	var pieceEaten = piece.map(eatPiece).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
+	for(var x = 0; x < pieceEaten.length; x++) {
+		currentPlayer.score += piece[pieceEaten[x]].score;
+		if(currentPlayer.shield) currentPlayer.shield = false;
+		else if (currentPlayer.protection === 0 && !currentPlayer.shield) {
+			//user in range died
+			console.log("[INFO] User " + currentPlayer.name + " was killed by piece");
+			//if bomb owner is still alive
+			var socketid = currentPlayer.id;
+			users.splice(currentPlayer, 1);
+			sockets[socketid].emit('RIP', 'You are DEAD!');
+		}
+		piece.splice(pieceEaten[x],1);
+		for(var y = 0; y < pieceEaten.length; y++) {
+			if(pieceEaten[x] < pieceEaten[y]) {
+				pieceEaten[y]--;
 			}
 		}
 	}
