@@ -316,6 +316,17 @@ function drawBomb(bomb) {
 function drawUser(user) {
 	var x = user.x - player.x + global.screenWidth / 2;
 	var y = user.y - player.y + global.screenHeight / 2;
+	if (user.opposite) {
+		graph.strokeStyle = "rgba(162,0,255,0.5)";
+		graph.fillStyle = "rgba(162,0,255,0.5)";
+		graph.lineWidth = 0;
+		drawCircle(x, y, 45, 30);
+	} else if (user.protection) {
+		graph.strokeStyle = "rgba(255,165,0,0.5)";
+		graph.fillStyle = "rgba(255,165,0,0.5)";
+		graph.lineWidth = 0;
+		drawCircle(x, y, 45, 30);
+	}
 	var img = document.getElementById("player_" + user.avatar);
 	graph.drawImage(img, x - 35, y - 40);
 	//draw username
@@ -324,7 +335,7 @@ function drawUser(user) {
 		nameCell = player.name;
 	else
 		nameCell = user.name;
-	drawText(x, y + user.radius + 10, nameCell);
+	drawText(x, y + user.radius + 15, nameCell);
 }
 
 function valueInRange(min, max, value) {

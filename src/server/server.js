@@ -33,13 +33,13 @@ function addItem(toAdd) {
 	var radius = 20;
 	while (toAdd--) {
 		var position = c.itemUniformDisposition ? util.uniformPosition(item, radius) : util.randomPosition(radius);
-		var type = Math.floor(Math.random() * 2);
+		var type = Math.floor(Math.random() * 4);
 		item.push({
 			id: ((new Date()).getTime() + '' + item.length) >>> 0,
 			x: position.x,
 			y: position.y,
 			radius: radius,
-			//item type: 0 for shield, 1 for dart
+			//item type: 0 for shield, 1 for dart, 2 for direction opposite, 3 for slow down
 			type: type
 		});
 	}
@@ -68,6 +68,20 @@ function movePlayer(player) {
 	var deg = Math.atan2(player.target.y, player.target.x);
 	var deltaY = player.speed * Math.sin(deg);
 	var deltaX = player.speed * Math.cos(deg);
+	//handle debuff
+	if (player.opposite > 0) {
+		deltaX = 0 - deltaX;
+		deltaY = 0 - deltaY;
+		player.opposite -= 1;
+	}
+	if (player.slowdown > 0) {
+		deltaX *= 0.5;
+		deltaY *= 0.5;
+		player.slowdown -= 1;
+	}
+	if (player.protection > 0) {
+		player.protection -= 1;
+	}
 	//handle the speed (only mobile)
 	var dist = Math.sqrt(Math.pow(player.target.y, 2) + Math.pow(player.target.x, 2));
 	if (dist < (50 + player.radius)) {
@@ -206,7 +220,10 @@ io.on('connection', function (socket) {
 		score: 0,
 		level: 1,
 		skillpoint: 0,
-		avatar: 1
+		avatar: 1,
+		protection: 0,
+		slowdown: 0,
+		opposite: 0
 	};
 	function playerInit() {
 		position = c.newPlayerInitialPosition == 'farthest' ? util.uniformPosition(users, radius) : util.randomPosition(radius);
@@ -221,6 +238,9 @@ io.on('connection', function (socket) {
 		currentPlayer.level = 1;
 		currentPlayer.skillpoint = 0;
 		currentPlayer.avatar = 1;
+		currentPlayer.protection = 0;
+		currentPlayer.slowdown = 0;
+		currentPlayer.opposite = 0;
 	}
 	//socket on event
 	socket.on('respawn', function (key) {
@@ -373,7 +393,12 @@ function tickPlayer(currentPlayer) {
 	//handle eating item
 	var itemEaten = item.map(eatItem).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
 	for(var m = 0; m < itemEaten.length; m++) {
-		currentPlayer.item[item[itemEaten[m]].type] = true;
+		if (item[itemEaten[m]].type < 2)
+			currentPlayer.item[item[itemEaten[m]].type] = true;
+		else if (item[itemEaten[m]].type === 2)
+			currentPlayer.opposite = 300;
+		else if (item[itemEaten[m]].type === 3)
+			currentPlayer.slowdown = 300;
 		item.splice(itemEaten[m],1);
 		for(var n = 0; n < itemEaten.length; n++) {
 			if(itemEaten[m] < itemEaten[n]) {
@@ -419,7 +444,8 @@ function EXPLOSION(currentBomb) {
 		if (users[user_range[m]].item[0]) {
 			//user in range has shield
 			users[user_range[m]].item[0] = false;
-		} else {
+			users[user_range[m]].protection = 300;
+		} else if (users[user_range[m]].protection === 0) {
 			//user in range died
 			console.log("[INFO] User " + users[user_range[m]].name + " was exploded");
 			//if bomb owner is still alive
@@ -588,7 +614,9 @@ function sendUpdates() {
 							y: f.y,
 							radius: f.radius,
 							level: f.level,
-							avatar: f.avatar
+							avatar: f.avatar,
+							protection: (f.protection > 0),
+							opposite: (f.opposite > 0)
 						};
 					} else {
 						return {
@@ -602,7 +630,9 @@ function sendUpdates() {
 							score: f.score,
 							level: f.level,
 							skillpoint: f.skillpoint,
-							avatar: f.avatar
+							avatar: f.avatar,
+							protection: (f.protection > 0),
+							opposite: (f.opposite > 0)
 						};
 					}
 				}

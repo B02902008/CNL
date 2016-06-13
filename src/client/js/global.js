@@ -20,7 +20,7 @@ module.exports = {
 	disconnected: false,
 	died: false,
 	kicked: false,
-	backgroundColor: '#f2fbff',
-	lineColor: '#000000',
+	backgroundColor: '#000495',
+	lineColor: '#ffffff',
 	pieceColor: ["#ee0000", "#f0c000", "#5555ff"]
 };
