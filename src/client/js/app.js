@@ -85,6 +85,7 @@ var darts = [];
 var bombs = [];
 var users = [];
 var leaderboard = [];
+var small_map = {user_list:[], piece_list:[], bomb_list:[], you:{}};
 var target = {x: 0, y: 0};
 global.target = target;
 
@@ -122,6 +123,10 @@ $( "#speed_plus" ).click(function() {
 });
 $( "#power_plus" ).click(function() {
 	socket.emit('4', "power");
+	c.focus();
+});
+$( "#shield" ).click(function() {
+	socket.emit('6', "shield");
 	c.focus();
 });
 
@@ -176,6 +181,9 @@ function setupSocket(socket) {
 		}
 		document.getElementById('ranking').innerHTML = leader;
 	});
+	socket.on('small_map', function (data) {
+		small_map = data;
+	});
 	//handle update
 	socket.on('serverTellPlayerMove', function (userData, itemsList, piecesList, dartList, bombsList) {
 		var playerData;
@@ -197,7 +205,8 @@ function setupSocket(socket) {
 		document.getElementById('power_status').style.width = playerData.power + "%";
 		document.getElementById('exp_status').style.width = Math.floor(100 * playerData.score / Math.pow(2, playerData.level)) + "%";
 		document.getElementById('exp_status').innerHTML = playerData.score + "/" + Math.pow(2, playerData.level);
-		document.getElementById('shield').src = playerData.shield ? "img/shield.png" : "img/shield_no.png";
+		document.getElementById('shield').src = (playerData.shield > 0) ? "img/shield.png" : "img/shield_no.png";
+		document.getElementById('shield_status').innerHTML = "x" + playerData.shield;
 		document.getElementById('dart').src = (playerData.dart > 0) ? "img/dart.png" : "img/dart_no.png";
 		document.getElementById('dart_status').innerHTML = "x" + playerData.dart;
 		//put to list
@@ -231,18 +240,9 @@ function setupSocket(socket) {
 	});
 }
 
-function drawCircle(centerX, centerY, radius, sides) {
-	var theta = 0;
-	var x = 0, y = 0;
-	//begin drawing
+function drawCircle(centerX, centerY, radius) {
 	graph.beginPath();
-	for (var i = 0; i < sides; i++) {
-		theta = (i / sides) * 2 * Math.PI;
-		x = centerX + radius * Math.sin(theta);
-		y = centerY + radius * Math.cos(theta);
-		graph.lineTo(x, y);
-	}
-	//finish drawing
+	graph.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
 	graph.closePath();
 	graph.stroke();
 	graph.fill();
@@ -302,6 +302,9 @@ function drawBomb(bomb) {
 		img = document.getElementById("explosion");
 		graph.drawImage(img, x - bomb.range, y - bomb.range, bomb.range * 2, bomb.range * 2);
 	} else {
+		if (bomb.transparent && (bomb.owner !== player.id)) {
+			graph.globalAlpha = 0.1;
+		}
 		img = document.getElementById("item_bomb");
 		graph.drawImage(img, x - 50, y - 57);
 		var timetext = "00：00";
@@ -311,6 +314,7 @@ function drawBomb(bomb) {
 				timetext = "0" + timetext;
 		}
 		drawText(x, y, timetext);
+		graph.globalAlpha = 1;
 	}
 }
 
@@ -320,13 +324,12 @@ function drawUser(user) {
 	if (user.opposite) {
 		graph.strokeStyle = "rgba(162,0,255,0.5)";
 		graph.fillStyle = "rgba(162,0,255,0.5)";
-		graph.lineWidth = 0;
-		drawCircle(x, y, 45, 30);
+		drawCircle(x, y, 45);
 	} else if (user.protection) {
 		graph.strokeStyle = "rgba(255,165,0,0.5)";
 		graph.fillStyle = "rgba(255,165,0,0.5)";
 		graph.lineWidth = 0;
-		drawCircle(x, y, 45, 30);
+		drawCircle(x, y, 45);
 	}
 	var img = document.getElementById("player_" + user.avatar);
 	graph.drawImage(img, x - 35, y - 40);
@@ -339,33 +342,120 @@ function drawUser(user) {
 	drawText(x, y + user.radius + 15, nameCell);
 }
 
-function valueInRange(min, max, value) {
-	return Math.min(max, Math.max(min, value));
+function drawSmall_map() {
+	var mapStart_x = global.screenWidth - 10 - global.mapWidth;
+	var mapStart_y = global.screenHeight - 10 - global.mapHeight;
+	//draw map
+	graph.strokeStyle = "#00dddd";
+	graph.fillStyle = "#000495";
+	graph.lineWidth = 10;
+	graph.beginPath();
+	graph.moveTo(mapStart_x, mapStart_y);
+	graph.lineTo(mapStart_x + global.mapWidth, mapStart_y);
+	graph.lineTo(mapStart_x + global.mapWidth, mapStart_y + global.mapHeight);
+	graph.lineTo(mapStart_x, mapStart_y + global.mapHeight);
+	graph.closePath();
+	graph.stroke();
+	graph.fill();
+	//draw grid
+	graph.strokeStyle = "#33ff33";
+	graph.lineWidth = 1;
+	graph.beginPath();
+	for (var i = mapStart_x; i < mapStart_x + global.mapWidth; i += global.mapWidth / 10) {
+		graph.moveTo(i, mapStart_y);
+		graph.lineTo(i, mapStart_y + global.mapHeight);
+	}
+	for (i = mapStart_y; i < mapStart_y + global.mapHeight; i += global.mapHeight / 10) {
+		graph.moveTo(mapStart_x, i);
+		graph.lineTo(mapStart_x + global.mapWidth, i);
+	}
+	graph.stroke();
+	//draw piece
+	var scale = small_map.gameWidth / global.mapWidth;
+	var x = 0, y = 0;
+	for (i = 0; i < small_map.piece_list.length; i++) {
+		x = mapStart_x + small_map.piece_list[i].x / scale;
+		y = mapStart_y + small_map.piece_list[i].y / scale;
+		graph.strokeStyle = "#ff00ff";
+		graph.fillStyle = "#ff00ff";
+		graph.lineWidth = 1;
+		drawCircle(x, y, 2);
+	}
+	//draw bomb
+	for (i = 0; i < small_map.bomb_list.length; i++) {
+		x = mapStart_x + small_map.bomb_list[i].x / scale;
+		y = mapStart_y + small_map.bomb_list[i].y / scale;
+		graph.strokeStyle = "rgba(255,0,0,0.4)";
+		graph.fillStyle = "rgba(255,0,0,0.4)";
+		graph.lineWidth = 1;
+		drawCircle(x, y, small_map.bomb_list[i].range / scale);
+		graph.strokeStyle = "#000000";
+		graph.fillStyle = "#000000";
+		drawCircle(x, y, 2);
+	}
+	//draw other player
+	for (i = 0; i < small_map.user_list.length; i++) {
+		x = mapStart_x + small_map.user_list[i].x / scale;
+		y = mapStart_y + small_map.user_list[i].y / scale;
+		graph.strokeStyle = "#00ff00";
+		graph.fillStyle = "#00ff00";
+		graph.lineWidth = 1;
+		drawCircle(x, y, 2);
+	}
+	//draw player
+	x = mapStart_x + small_map.you.x / scale;
+	y = mapStart_y + small_map.you.y / scale;
+	graph.strokeStyle = "#ffff00";
+	graph.fillStyle = "#ffff00";
+	graph.lineWidth = 1;
+	drawCircle(x, y, 2);
+	//draw screen
+	var map_screen_left = mapStart_x + Math.max(small_map.you.x - global.screenWidth/2, 0) / scale;
+	var map_screen_right = mapStart_x + Math.min(small_map.you.x + global.screenWidth/2, small_map.gameWidth) / scale;
+	var map_screen_up = mapStart_y + Math.max(small_map.you.y - global.screenHeight/2, 0) / scale;
+	var map_screen_down = mapStart_y + Math.min(small_map.you.y + global.screenHeight/2, small_map.gameHeight) / scale;
+	graph.strokeStyle = "#aaaaaa";
+	graph.lineWidth = 2;
+	graph.beginPath();
+	graph.moveTo(map_screen_left, map_screen_up);
+	graph.lineTo(map_screen_right, map_screen_up);
+	graph.lineTo(map_screen_right, map_screen_down);
+	graph.lineTo(map_screen_left, map_screen_down);
+	graph.closePath();
+	graph.stroke();
 }
 
 function drawgrid() {
-     graph.lineWidth = 1;
-     graph.strokeStyle = global.lineColor;
-     graph.globalAlpha = 0.15;
-     graph.beginPath();
-
-    for (var x = global.xoffset - player.x; x < global.screenWidth; x += global.screenHeight / 18) {
-        graph.moveTo(x, 0);
-        graph.lineTo(x, global.screenHeight);
-    }
-
-    for (var y = global.yoffset - player.y ; y < global.screenHeight; y += global.screenHeight / 18) {
-        graph.moveTo(0, y);
-        graph.lineTo(global.screenWidth, y);
-    }
-
-    graph.stroke();
-    graph.globalAlpha = 1;
+	graph.strokeStyle = global.lineColor;
+	for (var x = 0; x < global.gameWidth; x += global.gameWidth/100) {
+		if ((x >= (player.x - global.screenWidth/2)) && (x <= (player.x + global.screenWidth/2))) {
+			if ((x % (global.gameWidth/10)) === 0)
+				graph.lineWidth = 2;
+			else
+				graph.lineWidth = 1;
+			graph.beginPath();
+			graph.moveTo(x - player.x + global.screenWidth/2, Math.max(0, - player.y + global.screenHeight/2));
+			graph.lineTo(x - player.x + global.screenWidth/2, Math.min(global.screenHeight, global.gameHeight - player.y + global.screenHeight/2));
+			graph.stroke();
+		}
+	}
+	for (var y = 0; y < global.gameHeight; y += global.gameHeight/100) {
+		if ((y >= (player.y - global.screenHeight/2)) && (y <= (player.y + global.screenHeight/2))) {
+			if ((y % (global.gameHeight/10)) === 0)
+				graph.lineWidth = 2;
+			else
+				graph.lineWidth = 1;
+			graph.beginPath();
+			graph.moveTo(Math.max(0, - player.x + global.screenWidth/2), y - player.y + global.screenHeight/2);
+			graph.lineTo(Math.min(global.screenWidth, global.gameWidth - player.x + global.screenWidth/2), y - player.y + global.screenHeight/2);
+			graph.stroke();
+		}
+	}
 }
 
 function drawborder() {
-    graph.lineWidth = 1;
-    graph.strokeStyle = playerConfig.borderColor;
+    graph.lineWidth = 2;
+    graph.strokeStyle = global.lineColor;
 
     // Left-vertical.
     if (player.x <= global.screenWidth/2) {
@@ -453,6 +543,18 @@ function gameLoop() {
 			darts.forEach(drawDart);
 			bombs.forEach(drawBomb);
 			users.forEach(drawUser);
+			//blind mode
+			if (global.blindMode) {
+				graph.strokeStyle = "#000000";
+				graph.fillStyle = "#000000";
+				graph.lineWidth = 1;
+				graph.beginPath();
+				graph.rect(0,0,global.screenWidth, global.screenHeight);
+				graph.arc(global.screenWidth/2, global.screenHeight/2, global.screenHeight/4, 0, 2 * Math.PI, true);
+				graph.closePath();
+				graph.fill();
+			}
+			drawSmall_map();
 			socket.emit('0', window.canvas.target); // playerSendTarget "Heartbeat".
 		} else {
 			graph.fillStyle = '#333333';

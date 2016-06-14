@@ -2,7 +2,12 @@
 'use strict';
 var cfg = require('../../../config.json');
 
-//return piece sides by weighted random
+exports.itemType = function() {
+	var rand = Math.floor(Math.random() * 10);
+	var type = [0, 0, 0, 1, 1, 1, 2, 3, 4, 4];
+	return type[rand];
+};
+
 exports.pieceScore = function() {
 	var rand = Math.floor(Math.random() * 10);
 	var score = [1, 1, 1, 1, 1, 1, 2, 2, 2, 3];

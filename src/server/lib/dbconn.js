@@ -50,7 +50,7 @@ function getQuery(key, player, socket) {
 			player.speed = parseInt(obj[0].speed);
 			player.power = parseInt(obj[0].power);
 			player.bombNum = parseInt(obj[0].bombNum);
-			player.shield = (parseInt(obj[0].shield) > 0);
+			player.shield = parseInt(obj[0].shield);
 			player.dart = parseInt(obj[0].dart);
 			player.score = parseInt(obj[0].score);
 			player.level = parseInt(obj[0].level);
@@ -59,6 +59,7 @@ function getQuery(key, player, socket) {
 			player.protection = parseInt(obj[0].protection);
 			player.slowdown = parseInt(obj[0].slowdown);
 			player.opposite = parseInt(obj[0].opposite);
+			player.transparent = parseInt(obj[0].transparent);
 			socket.emit('welcome', player, false);
 		}
 	});
@@ -78,7 +79,7 @@ function getInsert(key, player) {
 		speed: player.speed,
 		power: player.power,
 		bombNum: player.bombNum,
-		shield: (player.shield ? 1 : 0),
+		shield: player.shield,
 		dart: player.dart,
 		score: player.score,
 		level: player.level,
@@ -86,7 +87,8 @@ function getInsert(key, player) {
 		avatar: player.avatar,
 		protection: player.protection,
 		slowdown: player.slowdown,
-		opposite: player.opposite
+		opposite: player.opposite,
+		transparent: player.transparent
 	};
 	db.query("INSERT INTO `user_status` SET ?", data, function(err) {
 		if (err) {

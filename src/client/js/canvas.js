@@ -86,18 +86,14 @@ class Canvas {
 	
 	keyInput(event) {
 		var key = event.which || event.keyCode;
-		if (key == global.KEY_BOMB && this.parent.reenviar) {
-				this.parent.socket.emit('1');
-				this.parent.reenviar = false;
-			} else if (key == global.KEY_DART && this.parent.reenviar) {
-	 			this.parent.socket.emit('2', this.parent.dartTarget);
-	 			this.parent.reenviar = false;
-	 		} else if (key == global.KEY_BREAK && this.parent.reenviar) {
-	//	if (key == global.KEY_BREAK && this.parent.reenviar) {
+		if (key == global.KEY_BREAK && this.parent.reenviar) {
 			var expire = new Date(), db_key = new Date().getTime() + '_' + global.player.id;
 			expire.setTime(expire.getTime() + (1 * 86400000));
 			document.cookie = "DB_KEY=" + db_key + ";expires=" + expire.toGMTString();
 			this.parent.socket.emit('3', db_key);
+			this.parent.reenviar = false;
+		} else if (key == global.KEY_BLIND && this.parent.reenviar) {
+			global.blindMode = ~(global.blindMode);
 			this.parent.reenviar = false;
 		}
 	}

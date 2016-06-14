@@ -20,19 +20,19 @@
 			<span id="point_status" style="float:left">Skill Points left : -1</span><br>
 			<span id="bomb_status" style="float:left">Bombs left : 0</span>
 			<button type="button" class="btn btn-default btn-xs" style="margin: 0px 0px 0px 0px; display:inline-block; float:right;" id="bomb_plus">+</button><br>
-			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; width: 130px; float:left;">
+			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; width: 140px; float:left;">
 				<div id="speed_status" class="progress-bar progress-bar-info" role="progressbar" style="width:0%">speed</div>
 			</div>
 			<button type="button" class="btn btn-info btn-xs" style="margin: 4px 0px 0px 0px; display:inline-block; float:right;" id="speed_plus">+</button><br>
-			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; width: 130px; float:left;">
+			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; width: 140px; float:left;">
 				<div id="power_status" class="progress-bar progress-bar-danger" role="progressbar" style="width:0%">power</div>
 			</div>
 			<button type="button" class="btn btn-danger btn-xs" style="margin: 4px 0px 0px 0px; display:inline-block; float:right;" id="power_plus">+</button><br>
-			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; float:left; width: 160px;">
+			<div class="progress" style="margin: 5px 0px 5px 0px; display:inline-block; float:left; width: 170px;">
 				<div id="exp_status" class="progress-bar progress-bar-success" role="progressbar" style="width:0%">0 / 0</div>
 			</div>
-			<img id="shield" src="img/shield_no.png" height="50" width="50" style="margin: 5px 10px 0px 0px">
-			<img id="dart" src="img/dart_no.png" height="50" width="50" style="margin: 5px 5px 0px 10px"><span id="dart_status">x0</span>
+			<img id="shield" src="img/shield_no.png" height="50" width="50" style="margin: 5px 5px 0px 0px"><span id="shield_status">x0</span>
+			<img id="dart" src="img/dart_no.png" height="50" width="50" style="margin: 5px 5px 0px 5px"><span id="dart_status">x0</span>
 		</div>
 		<div id="mobile">
 			<input type="image" id="bomb" class="bomb" src="img/bomb.png" alt="bombBtn">
@@ -42,20 +42,27 @@
 	</div>
 	<div id="startMenuWrapper">
 		<div id="startMenu">
-			<p>Join Game</p>
+			<p>加入遊戲</p>
 			<input type="text" tabindex="0" autofocus placeholder="Enter your name here" id="playerNameInput" maxlength="25" />
 			<b class="input-error">Nick must be alphanumeric characters only!</b>
 			<br />
-			<button id="startButton">Play</button>
-			<button id="resumeButton">Resume</button>
+			<button id="startButton">開始遊戲</button>
+			<button id="resumeButton">繼續遊戲</button>
 			<br />
 			<div id="instructions">
-				<h3>Gameplay</h3>
+				<h3>遊戲說明</h3>
 				<ul>
-					<li>Use WASD key to move your character.</li>
-					<li>Use Q key to set bomb (bomb's explosion will destory everything in its range).</li>
-					<li>Pieces / players destoryed by your bomb would be added to your score.</li>
-					<li>Objective: Try to get more score and beat other players.</li>
+					<li>以方向鍵控制角色移動</li>
+					<li>滑鼠左鍵可設置炸彈（５秒爆炸）</li>
+					<li>滑鼠右鍵可發射飛鏢提早引爆炸彈（配合游標瞄準）</li>
+					<li>鍵盤Ｐ鍵可存檔離開遊戲（下次請從Resume進入遊戲）</li>
+					<li>炸毀地圖上的菇菇寶貝和其他玩家賺取分數（分數為排名升級依據）</li>
+					<li>升級可得強化點數，可強化速度、爆炸半徑、及炸彈數</li>
+					<li>地圖上的道具說明①：盾可以主動/被動產生５秒的無敵時間</li>
+					<li>地圖上的道具說明②：飛鏢可以提早引爆炸彈玩自殺式攻擊</li>
+					<li>地圖上的道具說明③：水滴可以使１０秒內設置的炸彈隱形</li>
+					<li>地圖上的道具說明④：紫鬼會使方向鍵相反５秒</li>
+					<li>地圖上的道具說明⑤：蜘蛛網會使速度下降５秒</li>
 				</ul>
 			</div>
 		</div>
@@ -64,6 +71,7 @@
 	<img id="item_1" style="display:none;" src="img/item_1.png">
 	<img id="item_2" style="display:none;" src="img/item_2.png">
 	<img id="item_3" style="display:none;" src="img/item_3.png">
+	<img id="item_4" style="display:none;" src="img/item_4.png">
 	<img id="item_bomb" style="display:none;" src="img/item_bomb.png">
 	<img id="piece_1_up" style="display:none;" src="img/piece_1_up.png">
 	<img id="piece_1_down" style="display:none;" src="img/piece_1_down.png">

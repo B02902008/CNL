@@ -24,6 +24,8 @@ var sockets = {};
 var leaderboard = [];
 var leaderboardChanged = false;
 
+var small_map = {gameWidth:c.gameWidth, gameHeight:c.gameHeight, you:{x:0, y:0}};
+
 var V = SAT.Vector;
 var C = SAT.Circle;
 
@@ -33,13 +35,13 @@ function addItem(toAdd) {
 	var radius = 20;
 	while (toAdd--) {
 		var position = c.itemUniformDisposition ? util.uniformPosition(item, radius) : util.randomPosition(radius);
-		var type = Math.floor(Math.random() * 4);
+		var type = util.itemType();
 		item.push({
 			id: ((new Date()).getTime() + '' + item.length) >>> 0,
 			x: position.x,
 			y: position.y,
 			radius: radius,
-			//item type: 0 for shield, 1 for dart, 2 for direction opposite, 3 for slow down
+			//item type: 0 for shield, 1 for dart, 2 for direction opposite, 3 for slow down, 4 for transparent bomb
 			type: type
 		});
 	}
@@ -81,6 +83,9 @@ function movePlayer(player) {
 	}
 	if (player.protection > 0) {
 		player.protection -= 1;
+	}
+	if (player.transparent > 0) {
+		player.transparent -= 1;
 	}
 	//handle the speed (only mobile)
 	var dist = Math.sqrt(Math.pow(player.target.y, 2) + Math.pow(player.target.x, 2));
@@ -216,7 +221,7 @@ io.on('connection', function (socket) {
 		speed: 5,
 		power: 200,
 		bombNum: 1,
-		shield: false,
+		shield: 0,
 		dart: 0,
 		score: 0,
 		level: 1,
@@ -224,7 +229,8 @@ io.on('connection', function (socket) {
 		avatar: 1,
 		protection: 0,
 		slowdown: 0,
-		opposite: 0
+		opposite: 0,
+		transparent: 0
 	};
 	function playerInit() {
 		position = c.newPlayerInitialPosition == 'farthest' ? util.uniformPosition(users, radius) : util.randomPosition(radius);
@@ -233,15 +239,16 @@ io.on('connection', function (socket) {
 		currentPlayer.speed = 5;
 		currentPlayer.power = 200;
 		currentPlayer.bombNum = 1;
-		currentPlayer.shield = true;
+		currentPlayer.shield = 0;
 		currentPlayer.dart = 0;
 		currentPlayer.score = 0;
 		currentPlayer.level = 1;
 		currentPlayer.skillpoint = 0;
 		currentPlayer.avatar = 1;
-		currentPlayer.protection = 0;
+		currentPlayer.protection = 300;
 		currentPlayer.slowdown = 0;
 		currentPlayer.opposite = 0;
+		currentPlayer.transparent = 0;
 	}
 	//socket on event
 	socket.on('respawn', function (key) {
@@ -303,7 +310,8 @@ io.on('connection', function (socket) {
 				range: currentPlayer.power,
 				time: (new Date()).getTime() + 5000,
 				exploded: false,
-				explodedCount: 0
+				explodedCount: 0,
+				transparent: (currentPlayer.transparent > 0)
 			});
 			currentPlayer.bombNum -= 1;
 		}
@@ -373,6 +381,13 @@ io.on('connection', function (socket) {
 				currentPlayer.avatar -= 1;
 		}
 	});
+	socket.on('6', function() {
+		//use shield
+		if (currentPlayer.shield > 0) {
+			currentPlayer.protection = 300;
+			currentPlayer.shield -= 1;
+		}
+	});
 });
 
 function tickPlayer(currentPlayer) {
@@ -384,12 +399,7 @@ function tickPlayer(currentPlayer) {
 	//moving
 	movePlayer(currentPlayer);
 	//define functions
-	function eatItem(m) {
-		if(SAT.pointInCircle(new V(m.x, m.y), playerCircle))
-			return true;
-		return false;
-	}
-	function eatPiece(m) {
+	function eatObject(m) {
 		if(SAT.pointInCircle(new V(m.x, m.y), playerCircle))
 			return true;
 		return false;
@@ -397,48 +407,60 @@ function tickPlayer(currentPlayer) {
 	//start
 	var playerCircle = new C(new V(currentPlayer.x, currentPlayer.y), currentPlayer.radius);
 	//handle eating item
-	var itemEaten = item.map(eatItem).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
-	for(var m = 0; m < itemEaten.length; m++) {
+	var m, n;
+	var itemEaten = item.map(eatObject).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
+	for(m = 0; m < itemEaten.length; m++) {
 		switch (item[itemEaten[m]].type) {
 			case 0:
-				currentPlayer.shield = true;
+				if (currentPlayer.shield < c.playerstatus.shieldMax)
+					currentPlayer.shield += 1;
 				break;
 			case 1:
-				currentPlayer.dart += 1;
+				if (currentPlayer.dart < c.playerstatus.dartMax)
+					currentPlayer.dart += 1;
 				break;
 			case 2:
-				currentPlayer.opposite = 300;
+				if (currentPlayer.protection === 0)
+					currentPlayer.opposite = 300;
 				break;
 			case 3:
-				currentPlayer.slowdown = 300;
+				if (currentPlayer.protection === 0)
+					currentPlayer.slowdown = 300;
+				break;
+			case 4:
+				currentPlayer.transparent = 600;
 				break;
 		}
 		item.splice(itemEaten[m],1);
-		for(var n = 0; n < itemEaten.length; n++) {
+		for(n = 0; n < itemEaten.length; n++) {
 			if(itemEaten[m] < itemEaten[n]) {
 				itemEaten[n]--;
 			}
 		}
 	}
-
-	var pieceEaten = piece.map(eatPiece).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
-	for(var x = 0; x < pieceEaten.length; x++) {
-		currentPlayer.score += piece[pieceEaten[x]].score;
-		if(currentPlayer.shield) currentPlayer.shield = false;
-		else if (currentPlayer.protection === 0 && !currentPlayer.shield) {
-			//user in range died
-			console.log("[INFO] User " + currentPlayer.name + " was killed by piece");
-			//if bomb owner is still alive
-			var socketid = currentPlayer.id;
-			users.splice(currentPlayer, 1);
-			sockets[socketid].emit('RIP', 'You are DEAD!');
+	//handle eating piece
+	var pieceEaten = piece.map(eatObject).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
+	if (pieceEaten.length > 0) {
+		if ((currentPlayer.protection === 0) && (currentPlayer.shield > 0)) {
+			currentPlayer.shield -= 1;
+			currentPlayer.protection = 300;
+		} else if ((currentPlayer.protection === 0) && (currentPlayer.shield === 0)) {
+			users.splice(util.findIndex(users, currentPlayer.id), 1);
+			sockets[currentPlayer.id].emit('RIP', 'You crashed into a mushroom!');
 		}
-		piece.splice(pieceEaten[x],1);
-		for(var y = 0; y < pieceEaten.length; y++) {
-			if(pieceEaten[x] < pieceEaten[y]) {
-				pieceEaten[y]--;
+	}
+	for(m = 0; m < pieceEaten.length; m++) {
+		currentPlayer.score += piece[pieceEaten[m]].score;
+		piece.splice(pieceEaten[m],1);
+		for(n = 0; n < pieceEaten.length; n++) {
+			if(pieceEaten[m] < pieceEaten[n]) {
+				pieceEaten[n]--;
 			}
 		}
+	}
+	while (currentPlayer.score >= Math.pow(2, currentPlayer.level)) {
+		currentPlayer.level ++;
+		currentPlayer.skillpoint ++;
 	}
 }
 
@@ -464,7 +486,7 @@ function EXPLOSION(currentBomb) {
 	//clean piece in range
 	var piece_range = piece.map(inRange).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
 	for(m = 0; m < piece_range.length; m++) {
-		scoreTotal += piece[piece_range[m]].score;
+		scoreTotal += piece[piece_range[m]].score * 10;
 		piece.splice(piece_range[m],1);
 		for(n = 0; n < piece_range.length; n++) {
 			if(piece_range[m] < piece_range[n]) {
@@ -475,9 +497,9 @@ function EXPLOSION(currentBomb) {
 	//clean user in range
 	var user_range = users.map(inRange).reduce(function(a, b, c) {return b ? a.concat(c) : a; }, []);
 	for(m = 0; m < user_range.length; m++) {
-		if (users[user_range[m]].shield) {
+		if ((users[user_range[m]].shield > 0) && (users[user_range[m]].protection === 0)) {
 			//user in range has shield
-			users[user_range[m]].shield = false;
+			users[user_range[m]].shield -= 1;
 			users[user_range[m]].protection = 300;
 		} else if (users[user_range[m]].protection === 0) {
 			//user in range died
@@ -579,6 +601,29 @@ function gameloop() {
 }
 
 function sendUpdates() {
+	//renew the small map
+	small_map.user_list = users
+		.map(function(f) {
+			return {
+				x: f.x,
+				y: f.y
+			};
+		});
+	small_map.piece_list = piece
+		.map(function(f) {
+			return {
+				x: f.x,
+				y: f.y
+			};
+		});
+	small_map.bomb_list = bomb
+		.map(function(f) {
+			return {
+				x: f.x,
+				y: f.y,
+				range: f.range
+			};
+		});
 	users.forEach( function(u) {
 		u.x = u.x || c.gameWidth / 2;
 		u.y = u.y || c.gameHeight / 2;
@@ -626,9 +671,11 @@ function sendUpdates() {
 						id: f.id,
 						x: f.x,
 						y: f.y,
+						owner: f.owner,
 						range: f.range,
 						time: (f.time - (new Date()).getTime()) / 1000,
-						exploded: f.exploded
+						exploded: f.exploded,
+						transparent: f.transparent
 					};
 				}
 			})
@@ -678,6 +725,9 @@ function sendUpdates() {
 		if (leaderboardChanged) {
 			sockets[u.id].emit('leaderboard', leaderboard);
 		}
+		small_map.you.x = u.x;
+		small_map.you.y = u.y;
+		sockets[u.id].emit('small_map', small_map);
 	});
 	leaderboardChanged = false;
 }
