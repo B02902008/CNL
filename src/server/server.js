@@ -458,7 +458,7 @@ function tickPlayer(currentPlayer) {
 			}
 		}
 	}
-	while (currentPlayer.score >= Math.pow(2, currentPlayer.level)) {
+	while (currentPlayer.score >= Math.pow(1.1, currentPlayer.level)) {
 		currentPlayer.level ++;
 		currentPlayer.skillpoint ++;
 	}
@@ -525,7 +525,7 @@ function EXPLOSION(currentBomb) {
 	if (bombOwner > -1) {
 		users[bombOwner].score += scoreTotal;
 		users[bombOwner].bombNum += 1;
-		while (users[bombOwner].score >= Math.pow(2, users[bombOwner].level)) {
+		while (users[bombOwner].score >= Math.pow(1.1, users[bombOwner].level)) {
 			users[bombOwner].level ++;
 			users[bombOwner].skillpoint ++;
 		}
